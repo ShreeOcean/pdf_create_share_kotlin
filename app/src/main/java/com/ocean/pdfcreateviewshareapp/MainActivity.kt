@@ -27,6 +27,7 @@ import com.itextpdf.text.pdf.BaseFont
 import com.itextpdf.text.pdf.draw.LineSeparator
 import com.ocean.pdfcreateviewshareapp.databinding.ActivityMainBinding
 import com.ocean.pdfcreateviewshareapp.itextpdf.AddDataItemAction
+import com.ocean.pdfcreateviewshareapp.itextpdf.AddDataItemActionAlternateRowColor
 import com.ocean.pdfcreateviewshareapp.itextpdf.AddLineSeparatorAction
 import com.ocean.pdfcreateviewshareapp.itextpdf.AddParagraphAction
 import com.ocean.pdfcreateviewshareapp.itextpdf.AddTittleTextAction
@@ -158,7 +159,7 @@ class MainActivity : AppCompatActivity(), PdfContentProvider {
             BaseFont.createFont(BaseFont.TIMES_ROMAN, BaseFont.CP1252, BaseFont.EMBEDDED)
         val fontBody = BaseFont.createFont(BaseFont.HELVETICA, BaseFont.CP1252, BaseFont.EMBEDDED)
         val lineSeparator = LineSeparator().apply { lineColor = BaseColor(0, 0, 0, 68) }
-        val mOrderIdFont = Font(fontBody, 22.0f, Font.NORMAL, BaseColor.BLACK)
+        val mOrderIdFont = Font(fontBody, 18.0f, Font.NORMAL, BaseColor.BLACK)
 
         return listOf(
             AddTittleTextAction("Aadhaar Enabled Payment System", 25.0f, headerFont),
@@ -169,6 +170,9 @@ class MainActivity : AppCompatActivity(), PdfContentProvider {
             AddDataItemAction("Status", "Success", mOrderIdFont),
             AddDataItemAction("Transaction Amount", "Rs. 2500.00", mOrderIdFont),
             AddDataItemAction("Bank Name", "SBI", mOrderIdFont),
+            AddDataItemActionAlternateRowColor("Status", "Success", mOrderIdFont,0),
+            AddDataItemActionAlternateRowColor("Transaction Amount", "Rs. 2500.00", mOrderIdFont,1),
+            AddDataItemActionAlternateRowColor("Bank Name", "SBI", mOrderIdFont,2),
             AddParagraphAction(),
             AddTittleTextAction(
                 "Thank You",

@@ -81,6 +81,38 @@ class AddDataItemAction(
     }
 }
 
+class AddDataItemActionAlternateRowColor(
+    private val label: String,
+    private val value: String,
+    private val font: Font,
+    private val rowIndex: Int
+): PdfAction{
+    override fun perform(document: Document) {
+        val table = PdfPTable(2)
+        table.widthPercentage = 100f
+        val backgroundColors = if (rowIndex % 2 == 0)BaseColor.LIGHT_GRAY else BaseColor.WHITE
+
+        val labelCell = PdfPCell(Phrase(label, font)).apply {
+            border = PdfPCell.NO_BORDER
+            horizontalAlignment = Element.ALIGN_LEFT
+            backgroundColor = backgroundColors
+            paddingBottom = 10f
+        }
+
+        val valueCell = PdfPCell(Phrase(value, font)).apply {
+            border = PdfPCell.NO_BORDER
+            horizontalAlignment = Element.ALIGN_LEFT
+            backgroundColor = backgroundColors
+            paddingBottom = 10f
+        }
+
+        table.addCell(labelCell)
+        table.addCell(valueCell)
+        document.add(table)
+    }
+
+}
+
 class AddLineSeparatorAction(
     private val lineSeparator: LineSeparator
 ): PdfAction {
