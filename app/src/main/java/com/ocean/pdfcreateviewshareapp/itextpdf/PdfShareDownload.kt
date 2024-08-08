@@ -62,23 +62,35 @@ class AddTittleTextAction(
     }
 }
 
+fun getBaseColorFromResource(context: Context, colorResId: Int):BaseColor{
+    val colorInt = ContextCompat.getColor(context, colorResId)
+    return BaseColor(
+        android.graphics.Color.red(colorInt),
+        android.graphics.Color.green(colorInt),
+        android.graphics.Color.blue(colorInt)
+    )
+}
+
 class AddTittleTextActionBgColor(
+    private val context: Context,
     private val headerText: String,
     private val size: Float,
     private val font: BaseFont,
     private val textStyle: Int = Font.NORMAL,
     private val textColor: BaseColor = BaseColor.WHITE,
-    private val backgroundColors : BaseColor = BaseColor.ORANGE
+    private val backgroundColorsId : Int = R.color.orange
 ): PdfAction{
     override fun perform(document: Document) {
         val table = PdfPTable(1)
         table.widthPercentage = 100f
         val fontWithColor = Font(font,size,textStyle,textColor)
         val phrase = Phrase(headerText, fontWithColor)
+        val bgColor = getBaseColorFromResource(context, backgroundColorsId)
+
         val headertext = PdfPCell(phrase).apply {
             border = PdfPCell.NO_BORDER
             horizontalAlignment = Element.ALIGN_LEFT
-            backgroundColor = backgroundColors
+            this.backgroundColor = bgColor
             paddingBottom = 10f
             verticalAlignment = Element.ALIGN_LEFT
         }
@@ -112,15 +124,18 @@ class AddDataItemAction(
 }
 
 class AddDataItemActionAlternateRowColor(
+    private val context: Context,
     private val label: String,
     private val value: String,
     private val font: Font,
-    private val rowIndex: Int
+    private val rowIndex: Int,
 ): PdfAction{
     override fun perform(document: Document) {
         val table = PdfPTable(2)
         table.widthPercentage = 100f
-        val backgroundColors = if (rowIndex % 2 == 0)BaseColor.LIGHT_GRAY else BaseColor.WHITE
+        val greyColor = getBaseColorFromResource(context, R.color.light_grey)
+        val whiteColor = getBaseColorFromResource(context, R.color.white)
+        val backgroundColors = if (rowIndex % 2 == 0)greyColor else whiteColor
 
         val labelCell = PdfPCell(Phrase(label, font)).apply {
             border = PdfPCell.NO_BORDER
