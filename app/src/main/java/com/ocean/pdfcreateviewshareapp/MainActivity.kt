@@ -31,6 +31,7 @@ import com.ocean.pdfcreateviewshareapp.itextpdf.AddDataItemActionAlternateRowCol
 import com.ocean.pdfcreateviewshareapp.itextpdf.AddLineSeparatorAction
 import com.ocean.pdfcreateviewshareapp.itextpdf.AddParagraphAction
 import com.ocean.pdfcreateviewshareapp.itextpdf.AddTittleTextAction
+import com.ocean.pdfcreateviewshareapp.itextpdf.AddTittleTextActionBgColor
 import com.ocean.pdfcreateviewshareapp.itextpdf.PdfAction
 import com.ocean.pdfcreateviewshareapp.itextpdf.PdfContentProvider
 import com.ocean.pdfcreateviewshareapp.itextpdf.PdfUtil
@@ -162,9 +163,9 @@ class MainActivity : AppCompatActivity(), PdfContentProvider {
         val mOrderIdFont = Font(fontBody, 18.0f, Font.NORMAL, BaseColor.BLACK)
 
         return listOf(
-            AddTittleTextAction("Aadhaar Enabled Payment System", 25.0f, headerFont),
+            AddTittleTextActionBgColor("Aadhaar Enabled Payment System", 25.0f, headerFont),
             AddParagraphAction(),
-            AddTittleTextAction("Transaction Details", 30.0f, headerFont, Font.BOLD, mColorAccent),
+//            AddTittleTextActionBgColor("Transaction Details", 30.0f, headerFont, Font.BOLD, mColorAccent),
             AddParagraphAction(),
             AddLineSeparatorAction(lineSeparator),
             AddDataItemAction("Status", "Success", mOrderIdFont),

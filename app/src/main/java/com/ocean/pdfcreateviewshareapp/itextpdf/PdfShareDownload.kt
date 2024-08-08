@@ -57,6 +57,31 @@ class AddTittleTextAction(
         document.add(paragraph)
     }
 }
+class AddTittleTextActionBgColor(
+    private val headerText: String,
+    private val size: Float,
+    private val font: BaseFont,
+    private val textStyle: Int = Font.NORMAL,
+    private val textColor: BaseColor = BaseColor.WHITE,
+    private val backgroundColors : BaseColor = BaseColor.ORANGE
+): PdfAction{
+    override fun perform(document: Document) {
+        val table = PdfPTable(1)
+        table.widthPercentage = 100f
+        val fontWithColor = Font(font,size,textStyle,textColor)
+        val phrase = Phrase(headerText, fontWithColor)
+        val headertext = PdfPCell(phrase).apply {
+            border = PdfPCell.NO_BORDER
+            horizontalAlignment = Element.ALIGN_LEFT
+            backgroundColor = backgroundColors
+            paddingBottom = 10f
+            verticalAlignment = Element.ALIGN_LEFT
+        }
+        table.addCell(headertext)
+        document.add(table)
+    }
+
+}
 
 class AddDataItemAction(
     private val label: String,
