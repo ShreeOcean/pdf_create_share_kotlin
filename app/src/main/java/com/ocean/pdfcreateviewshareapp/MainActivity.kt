@@ -8,6 +8,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Typeface
+import android.graphics.drawable.Drawable
 import android.graphics.pdf.PdfDocument
 import android.os.Build
 import android.os.Bundle
@@ -28,6 +29,7 @@ import com.itextpdf.text.pdf.draw.LineSeparator
 import com.ocean.pdfcreateviewshareapp.databinding.ActivityMainBinding
 import com.ocean.pdfcreateviewshareapp.itextpdf.AddDataItemAction
 import com.ocean.pdfcreateviewshareapp.itextpdf.AddDataItemActionAlternateRowColor
+import com.ocean.pdfcreateviewshareapp.itextpdf.AddImageInRowAction
 import com.ocean.pdfcreateviewshareapp.itextpdf.AddLineSeparatorAction
 import com.ocean.pdfcreateviewshareapp.itextpdf.AddParagraphAction
 import com.ocean.pdfcreateviewshareapp.itextpdf.AddTittleTextAction
@@ -163,14 +165,15 @@ class MainActivity : AppCompatActivity(), PdfContentProvider {
         val mOrderIdFont = Font(fontBody, 18.0f, Font.NORMAL, BaseColor.BLACK)
 
         return listOf(
+            AddImageInRowAction(this, R.drawable.ic_android_black_24dp, R.drawable.android_whole_icon, 100, 75),
             AddTittleTextActionBgColor("Aadhaar Enabled Payment System", 25.0f, headerFont),
             AddParagraphAction(),
 //            AddTittleTextActionBgColor("Transaction Details", 30.0f, headerFont, Font.BOLD, mColorAccent),
             AddParagraphAction(),
             AddLineSeparatorAction(lineSeparator),
-            AddDataItemAction("Status", "Success", mOrderIdFont),
-            AddDataItemAction("Transaction Amount", "Rs. 2500.00", mOrderIdFont),
-            AddDataItemAction("Bank Name", "SBI", mOrderIdFont),
+            AddDataItemActionAlternateRowColor("Status", "Success", mOrderIdFont,3),
+            AddDataItemActionAlternateRowColor("Transaction Amount", "Rs. 2500.00", mOrderIdFont,4),
+            AddDataItemActionAlternateRowColor("Bank Name", "SBI", mOrderIdFont,5),
             AddDataItemActionAlternateRowColor("Status", "Success", mOrderIdFont,0),
             AddDataItemActionAlternateRowColor("Transaction Amount", "Rs. 2500.00", mOrderIdFont,1),
             AddDataItemActionAlternateRowColor("Bank Name", "SBI", mOrderIdFont,2),

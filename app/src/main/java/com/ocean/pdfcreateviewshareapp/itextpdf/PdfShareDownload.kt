@@ -42,6 +42,10 @@ interface PdfAction {
     fun perform(document: Document)
 }
 
+interface PdfContentProvider{
+    fun providePdfActions(): List<PdfAction?>
+}
+
 class AddTittleTextAction(
     private val text: String,
     private val size: Float,
@@ -57,6 +61,7 @@ class AddTittleTextAction(
         document.add(paragraph)
     }
 }
+
 class AddTittleTextActionBgColor(
     private val headerText: String,
     private val size: Float,
@@ -157,8 +162,68 @@ class AddParagraphAction(
     }
 }
 
-interface PdfContentProvider{
-    fun providePdfActions(): List<PdfAction?>
+class AddImageInRowAction(
+    private val context: Context,
+    private val drawableId1: Int,
+    private val drawableId2: Int,
+    private val drawableWidth: Int,
+    private val drawableHeight: Int
+):PdfAction{
+    override fun perform(document: Document) {
+        Add2ImagePdfInRow.addImagesInRow(document, context, drawableId1, drawableId2, drawableWidth, drawableHeight)
+    }
+
+}
+
+object Add2ImagePdfInRow {
+    fun createImage(
+        context: Context,
+        drawableId: Int,
+        drawableWidth: Int,
+        drawableHeight: Int
+    ):Image{
+        val drawable = ContextCompat.getDrawable(context,drawableId)!!
+        val bitmap = Bitmap.createBitmap(drawableWidth, drawableHeight, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+
+        drawable.setBounds(0,0,canvas.width,canvas.height)
+        drawable.draw(canvas)
+
+        val stream = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+
+        val image = Image.getInstance(stream.toByteArray())
+        image.alignment = Element.ALIGN_CENTER
+        return image
+    }
+
+    fun addImagesInRow(
+        document: Document,
+        context: Context,
+        drawableId1: Int,
+        drawableId2: Int,
+        drawableWidth: Int,
+        drawableHeight: Int
+    ){
+        val table = PdfPTable(2)
+        table.widthPercentage = 100f
+
+        val image1 = createImage(context,drawableId1,drawableWidth,drawableHeight)
+        val image2 = createImage(context,drawableId2,drawableWidth,drawableHeight)
+
+        val image1Cell = PdfPCell(image1)
+        image1Cell.border = PdfPCell.NO_BORDER
+        image1Cell.horizontalAlignment = Element.ALIGN_LEFT
+
+        val image2Cell = PdfPCell(image2)
+        image2Cell.border = PdfPCell.NO_BORDER
+        image2Cell.horizontalAlignment = Element.ALIGN_RIGHT
+
+        table.addCell(image1Cell)
+        table.addCell(image2Cell)
+
+        document.add(table)
+    }
 }
 
 fun Document.addRectangle() {
@@ -172,7 +237,7 @@ fun Document.addRectangle() {
     rect.borderColor = BaseColor.LIGHT_GRAY
     this.add(rect)
 }
-
+//function by amit.
 fun Document.addImage(
     drawable: Drawable,
     drawableWidth: Int,
@@ -227,8 +292,7 @@ object PdfUtil {
                 document.addCreationDate()
                 document.addRectangle()
                 // Convert the drawable to an Image
-                document.addImage(ContextCompat.getDrawable(context, R.drawable.ic_android_black_24dp)!!,200,75)
-
+//                document.addImage(ContextCompat.getDrawable(context, R.drawable.ic_android_black_24dp)!!,200,75)
                 for (action in actions){
                     action?.perform(document)
                 }
