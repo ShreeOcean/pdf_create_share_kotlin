@@ -25,8 +25,11 @@ import com.itextpdf.text.Paragraph
 import com.itextpdf.text.Phrase
 import com.itextpdf.text.Rectangle
 import com.itextpdf.text.pdf.BaseFont
+import com.itextpdf.text.pdf.ColumnText
+import com.itextpdf.text.pdf.PdfContentByte
 import com.itextpdf.text.pdf.PdfPCell
 import com.itextpdf.text.pdf.PdfPTable
+import com.itextpdf.text.pdf.PdfPageEventHelper
 import com.itextpdf.text.pdf.PdfWriter
 import com.itextpdf.text.pdf.draw.LineSeparator
 import com.ocean.pdfcreateviewshareapp.R
@@ -310,8 +313,8 @@ fun addFooterWithLines(
     context: Context,
     footerText: String,
     footerFont: Font,
-    lineColor1: BaseColor, //= getBaseColorFromResource(context, R.color.orange),
-    lineColor2: BaseColor, //= getBaseColorFromResource(context, R.color.purple),
+    lineColor1: BaseColor = getBaseColorFromResource(context, R.color.orange),
+    lineColor2: BaseColor = getBaseColorFromResource(context, R.color.purple),
     lineWidth: Float = 2f,
     lineHeight: Float = 1f,
     footerAlignment: Int = Element.ALIGN_CENTER
@@ -324,6 +327,84 @@ fun addFooterWithLines(
     val lineSeparator2 = LineSeparator(lineWidth, 100f, lineColor2, Element.ALIGN_CENTER, -2f)
     document.add(Chunk(lineSeparator2))
 
+}
+
+class FooterEventHandler(private val context: Context) : PdfPageEventHelper(){
+
+    override fun onEndPage(writer: PdfWriter?, document: Document?) {
+        val cb : PdfContentByte = writer!!.directContent
+        val pageSize = document!!.pageSize
+        //Footer Text
+        val footerFont = Font(Font.FontFamily.HELVETICA, 10f, Font.NORMAL, BaseColor.BLACK)
+        val footerText = Phrase("NOTE: For any questions about your transaction, please reach out to SOME COMPANY customer care at 0000000000", footerFont)
+
+        //Position the footer at the bottom of the page
+        ColumnText.showTextAligned(
+            cb,
+            Element.ALIGN_RIGHT,
+            footerText,
+            (pageSize.left + pageSize.right)/2,
+            pageSize.bottom + 40f,
+            0f
+        )
+
+        // Draw the colored lines
+        val line1 = LineSeparator(5f, 100f, getBaseColorFromResource(context, R.color.orange), Element.ALIGN_CENTER, 0f)
+        val line2 = LineSeparator(5f, 100f, getBaseColorFromResource(context, R.color.purple), Element.ALIGN_CENTER, -5f)
+
+        // Set footer content and draw lines
+        val footerTable = PdfPTable(1)
+        footerTable.totalWidth = document.pageSize?.width ?: PageSize.A4.width
+        footerTable.isLockedWidth = true
+        footerTable.defaultCell.border = Rectangle.NO_BORDER
+        footerTable.defaultCell.horizontalAlignment = Element.ALIGN_CENTER
+
+        // Add the colored lines to the footer
+        val linesCell = PdfPCell()
+        linesCell.border = Rectangle.NO_BORDER
+        linesCell.addElement(Chunk(line1))
+        linesCell.addElement(Chunk(line2))
+        footerTable.addCell(linesCell)
+
+//        // Optionally, add other footer content (e.g., text)
+//        footerTable.addCell(Phrase("Your Footer Text Here", Font(Font.FontFamily.HELVETICA, 12f, Font.NORMAL, BaseColor.BLACK)))
+//
+        // Write the footer at the bottom of the page
+        footerTable.writeSelectedRows(0, -1, document.leftMargin() ?: 36f,
+            document.bottomMargin() ?: (36f + 20f), cb)
+
+
+//        document.add(line1)
+//        document.add(line2)
+
+        /*// Draw the first orange line with a border
+        cb.setColorStroke(getBaseColorFromResource(context, R.color.orange))
+        cb.setLineWidth(6f) // Width of the line
+        cb.moveTo(pageSize.borderWidthLeft, pageSize.bottom + 10f)
+        cb.lineTo(pageSize.right - pageSize.borderWidthRight, pageSize.bottom + 10f)
+        cb.stroke()
+
+        // Draw the blue stroke around the orange line
+        cb.setColorStroke(getBaseColorFromResource(context, R.color.purple))
+        cb.setLineWidth(8f) // Width of the stroke line
+        cb.moveTo(pageSize.borderWidthLeft, pageSize.bottom + 10f)
+        cb.lineTo(pageSize.right - pageSize.borderWidthRight, pageSize.bottom + 10f)
+        cb.stroke()
+
+        // Draw the second blue line with a border
+        cb.setColorStroke(getBaseColorFromResource(context, R.color.purple))
+        cb.setLineWidth(6f) // Width of the line
+        cb.moveTo(pageSize.borderWidthLeft, pageSize.bottom + 18f)
+        cb.lineTo(pageSize.right - pageSize.borderWidthRight, pageSize.bottom + 18f)
+        cb.stroke()
+
+        // Draw the second orange stroke
+        cb.setColorStroke(getBaseColorFromResource(context, R.color.orange))
+        cb.setLineWidth(8f) // Width of the stroke line
+        cb.moveTo(pageSize.borderWidthLeft, pageSize.bottom + 18f)
+        cb.lineTo(pageSize.right - pageSize.borderWidthRight, pageSize.bottom + 18f)
+        cb.stroke()*/
+    }
 }
 
 object PdfUtil {
@@ -350,20 +431,24 @@ object PdfUtil {
                 val fOut = FileOutputStream(file)
 
                 val document = Document()
-                PdfWriter.getInstance(document, fOut)
+                val writer = PdfWriter.getInstance(document, fOut)
+
+                // Set the custom footer handler
+                val footerEvent = FooterEventHandler(context)
+                writer.pageEvent = footerEvent
 
                 document.open()
                 // Document Settings
                 document.setPageSize(PageSize.A4)
                 document.addCreationDate()
-                document.addRectangle()
+//                document.addRectangle()
                 // Convert the drawable to an Image
 //                document.addImage(ContextCompat.getDrawable(context, R.drawable.ic_android_black_24dp)!!,200,75)
                 for (action in actions){
                     action?.perform(document)
                 }
 
-                val footerFont = Font(
+                /*val footerFont = Font(
                     BaseFont.createFont(BaseFont.HELVETICA,  BaseFont.CP1252, BaseFont.NOT_EMBEDDED),
                     12f,
                     Font.NORMAL,
@@ -384,7 +469,7 @@ object PdfUtil {
                     lineColor2 = lineColor2,
                     lineWidth = 2f,
                     footerAlignment = Element.ALIGN_BOTTOM
-                )
+                )*/
 
                 document.close()
 
