@@ -1,5 +1,6 @@
 package com.ocean.pdfcreateviewshareapp.itextpdf
 
+import android.annotation.SuppressLint
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -62,6 +63,7 @@ class AddTittleTextAction(
     }
 }
 
+/** This method add required color in the in-build lib BaseColor class */
 fun getBaseColorFromResource(context: Context, colorResId: Int):BaseColor{
     val colorInt = ContextCompat.getColor(context, colorResId)
     return BaseColor(
@@ -177,7 +179,7 @@ class AddParagraphAction(
     }
 }
 
-class AddImageInRowAction(
+class AddImagesInRowAction(
     private val context: Context,
     private val drawableId1: Int,
     private val drawableId2: Int,
@@ -187,7 +189,6 @@ class AddImageInRowAction(
     override fun perform(document: Document) {
         Add2ImagePdfInRow.addImagesInRow(document, context, drawableId1, drawableId2, drawableWidth, drawableHeight)
     }
-
 }
 
 object Add2ImagePdfInRow {
@@ -216,7 +217,7 @@ object Add2ImagePdfInRow {
         document: Document,
         context: Context,
         drawableId1: Int,
-        drawableId2: Int,
+        drawableId2: Int = 0,
         drawableWidth: Int,
         drawableHeight: Int
     ){
@@ -239,6 +240,35 @@ object Add2ImagePdfInRow {
 
         document.add(table)
     }
+}
+
+class AddImageAction(
+    private val context: Context,
+    private val drawableId: Int,
+    private val drawableWidth: Int,
+    private val drawableHeight: Int,
+    private val alignment: Int = Element.ALIGN_LEFT
+): PdfAction{
+    @SuppressLint("UseCompatLoadingForDrawables")
+    override fun perform(document: Document) {
+        val drawable = context.resources.getDrawable(drawableId, null)
+        val bitmap = Bitmap.createBitmap(
+            drawableWidth,
+            drawableHeight,
+            Bitmap.Config.ARGB_8888
+        )
+        val canvas = Canvas(bitmap)
+        drawable.setBounds(0,0,canvas.width, canvas.height)
+        drawable.draw(canvas)
+
+        val stream = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+
+        val image = Image.getInstance(stream.toByteArray())
+        image.alignment = alignment
+        document.add(image)
+    }
+
 }
 
 fun Document.addRectangle() {
@@ -273,6 +303,27 @@ fun Document.addImage(
     val image = Image.getInstance(stream.toByteArray())
     image.alignment = Element.ALIGN_CENTER
     this.add(image)
+}
+
+fun addFooterWithLines(
+    document: Document,
+    context: Context,
+    footerText: String,
+    footerFont: Font,
+    lineColor1: BaseColor, //= getBaseColorFromResource(context, R.color.orange),
+    lineColor2: BaseColor, //= getBaseColorFromResource(context, R.color.purple),
+    lineWidth: Float = 2f,
+    lineHeight: Float = 1f,
+    footerAlignment: Int = Element.ALIGN_CENTER
+){
+    val footerParagraph = Paragraph(footerText, footerFont)
+    footerParagraph.alignment = footerAlignment
+    document.add(footerParagraph)
+    val lineSeparator1 = LineSeparator(lineWidth, 100f, lineColor1, Element.ALIGN_CENTER, -2f)
+    document.add(Chunk(lineSeparator1))
+    val lineSeparator2 = LineSeparator(lineWidth, 100f, lineColor2, Element.ALIGN_CENTER, -2f)
+    document.add(Chunk(lineSeparator2))
+
 }
 
 object PdfUtil {
@@ -311,6 +362,29 @@ object PdfUtil {
                 for (action in actions){
                     action?.perform(document)
                 }
+
+                val footerFont = Font(
+                    BaseFont.createFont(BaseFont.HELVETICA,  BaseFont.CP1252, BaseFont.NOT_EMBEDDED),
+                    12f,
+                    Font.NORMAL,
+                    BaseColor.BLACK
+                )
+
+                AddParagraphAction()
+                val lineColor1: BaseColor = getBaseColorFromResource(context, R.color.orange)
+                AddParagraphAction()
+                val lineColor2: BaseColor = getBaseColorFromResource(context, R.color.purple)
+
+                addFooterWithLines(
+                    document = document,
+                    context = context,
+                    footerText = "NOTE: For any questions about your transaction, please reach out to SOMECOMPANY customer care at 0000000000",
+                    footerFont = footerFont,
+                    lineColor1 = lineColor1,
+                    lineColor2 = lineColor2,
+                    lineWidth = 2f,
+                    footerAlignment = Element.ALIGN_BOTTOM
+                )
 
                 document.close()
 

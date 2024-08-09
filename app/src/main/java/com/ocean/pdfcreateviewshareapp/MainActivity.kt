@@ -4,11 +4,9 @@ import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Typeface
-import android.graphics.drawable.Drawable
 import android.graphics.pdf.PdfDocument
 import android.os.Build
 import android.os.Bundle
@@ -27,9 +25,9 @@ import com.itextpdf.text.Font
 import com.itextpdf.text.pdf.BaseFont
 import com.itextpdf.text.pdf.draw.LineSeparator
 import com.ocean.pdfcreateviewshareapp.databinding.ActivityMainBinding
-import com.ocean.pdfcreateviewshareapp.itextpdf.AddDataItemAction
 import com.ocean.pdfcreateviewshareapp.itextpdf.AddDataItemActionAlternateRowColor
-import com.ocean.pdfcreateviewshareapp.itextpdf.AddImageInRowAction
+import com.ocean.pdfcreateviewshareapp.itextpdf.AddImageAction
+import com.ocean.pdfcreateviewshareapp.itextpdf.AddImagesInRowAction
 import com.ocean.pdfcreateviewshareapp.itextpdf.AddLineSeparatorAction
 import com.ocean.pdfcreateviewshareapp.itextpdf.AddParagraphAction
 import com.ocean.pdfcreateviewshareapp.itextpdf.AddTittleTextAction
@@ -61,10 +59,6 @@ class MainActivity : AppCompatActivity(), PdfContentProvider {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
-
-//        bmp = BitmapFactory.decodeResource(resources, R.drawable.ic_launcher_foreground)
-//        scaleBmp = Bitmap.createScaledBitmap(bmp, 140, 140, false)
-
         if (checkPermission()){
             Toast.makeText(this, "Permission Granted...", Toast.LENGTH_SHORT).show()
         }else{
@@ -72,50 +66,12 @@ class MainActivity : AppCompatActivity(), PdfContentProvider {
         }
 
         binding.idBtnGeneratePdf.setOnClickListener {
-//            generatePdf()
             PdfUtil.createAndDisplayPdf(this, "pdf", this)
         }
         binding.idBtnSharePdf.setOnClickListener {
-//            generatePdf()
             PdfUtil.createAndDisplayPdf(this, "share", this)
         }
     }
-
-    private fun generatePdf() {
-        val pdfDocument = PdfDocument()
-        val paint = Paint()
-        val title = Paint()
-        val myPageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, 1).create()
-        val myPage : PdfDocument.Page = pdfDocument.startPage(myPageInfo)
-        val canvas: Canvas = myPage.canvas
-
-        canvas.drawBitmap(scaleBmp, 56F, 40F, paint)
-        title.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.NORMAL))
-        title.textSize = 15F
-        title.setColor(ContextCompat.getColor(this, R.color.purple))
-
-        canvas.drawText("A portal for IT professionals.", 209F, 100F, title)
-        canvas.drawText("Geeks for Geeks", 209F, 80F, title)
-        title.setTypeface(Typeface.defaultFromStyle(Typeface.NORMAL))
-        title.setColor(ContextCompat.getColor(this, R.color.purple))
-        title.textSize = 15F
-
-        title.textAlign = Paint.Align.CENTER
-        canvas.drawText("This is a sample document which we have created.", 396F, 560F, title)
-        pdfDocument.finishPage(myPage)
-
-        val file: File = File(Environment.getExternalStorageDirectory(), "GFG.pdf")
-
-        try {
-
-        }catch (e: Exception){
-            e.printStackTrace()
-            Toast.makeText(applicationContext, "Fail to generate PDF file...", Toast.LENGTH_SHORT).show()
-        }
-        pdfDocument.close()
-
-    }
-
     private fun checkPermission(): Boolean {
 
         val writeStoragePermission = ContextCompat.checkSelfPermission(
@@ -165,7 +121,8 @@ class MainActivity : AppCompatActivity(), PdfContentProvider {
         val mOrderIdFont = Font(fontBody, 18.0f, Font.NORMAL, BaseColor.BLACK)
 
         return listOf(
-            AddImageInRowAction(this, R.drawable.ic_android_black_24dp, R.drawable.android_whole_icon, 100, 75),
+            AddImagesInRowAction(this, R.drawable.ic_android_black_24dp, R.drawable.android_whole_icon, 100, 75),
+            AddImageAction(this, R.drawable.baseline_bakery_dining_24, 100, 75),
             AddTittleTextActionBgColor(this,"Aadhaar Enabled Payment System", 25.0f, headerFont),
             AddParagraphAction(),
 //            AddTittleTextActionBgColor("Transaction Details", 30.0f, headerFont, Font.BOLD, mColorAccent),
