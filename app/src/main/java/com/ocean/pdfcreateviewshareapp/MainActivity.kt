@@ -123,34 +123,15 @@ class MainActivity : AppCompatActivity(), PdfContentProvider {
         return listOf(
             AddImagesInRowAction(this, R.drawable.ic_android_black_24dp, R.drawable.android_whole_icon, 100, 75),
             AddImageAction(this, R.drawable.baseline_bakery_dining_24, 100, 75),
-            AddTittleTextActionBgColor(this,"Aadhaar Enabled Payment System", 25.0f, headerFont),
-            AddParagraphAction(),
-//            AddTittleTextActionBgColor("Transaction Details", 30.0f, headerFont, Font.BOLD, mColorAccent),
-            AddParagraphAction(),
+            AddTittleTextActionBgColor(this,"Something-- Receipt", 25.0f, headerFont),
             AddLineSeparatorAction(lineSeparator),
             AddDataItemActionAlternateRowColor(this,"Status", "Success", mOrderIdFont,3),
-            AddDataItemActionAlternateRowColor(this,"Transaction Amount", "Rs. 2500.00", mOrderIdFont,4),
+            AddDataItemActionAlternateRowColor(this, "Amount", "Rs. 2500.00", mOrderIdFont,4),
             AddDataItemActionAlternateRowColor(this,"Bank Name", "SBI", mOrderIdFont,5),
             AddDataItemActionAlternateRowColor(this,"Status", "Success", mOrderIdFont,0),
-            AddDataItemActionAlternateRowColor(this,"Transaction Amount", "Rs. 2500.00", mOrderIdFont,1),
+            AddDataItemActionAlternateRowColor(this,"Amount", "Rs. 2500.00", mOrderIdFont,1),
             AddDataItemActionAlternateRowColor(this,"Bank Name", "SBI", mOrderIdFont,2),
-            AddParagraphAction(),
-            AddTittleTextAction(
-                "Thank You",
-                22.0f,
-                headerFont,
-                Font.NORMAL,
-                mColorAccent,
-                Element.ALIGN_RIGHT
-            ),
-            AddTittleTextAction(
-                "SOME-COMPANY",
-                24.0f,
-                headerFont,
-                Font.NORMAL,
-                BaseColor.BLACK,
-                Element.ALIGN_RIGHT
-            )
+            AddParagraphAction()
         )
     }
 }

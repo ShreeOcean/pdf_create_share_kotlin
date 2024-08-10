@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
@@ -23,13 +22,9 @@ import com.itextpdf.text.Image
 import com.itextpdf.text.PageSize
 import com.itextpdf.text.Paragraph
 import com.itextpdf.text.Phrase
-import com.itextpdf.text.Rectangle
 import com.itextpdf.text.pdf.BaseFont
-import com.itextpdf.text.pdf.ColumnText
-import com.itextpdf.text.pdf.PdfContentByte
 import com.itextpdf.text.pdf.PdfPCell
 import com.itextpdf.text.pdf.PdfPTable
-import com.itextpdf.text.pdf.PdfPageEventHelper
 import com.itextpdf.text.pdf.PdfWriter
 import com.itextpdf.text.pdf.draw.LineSeparator
 import com.ocean.pdfcreateviewshareapp.R
@@ -195,7 +190,7 @@ class AddImagesInRowAction(
 }
 
 object Add2ImagePdfInRow {
-    fun createImage(
+    private fun createImage(
         context: Context,
         drawableId: Int,
         drawableWidth: Int,
@@ -274,137 +269,51 @@ class AddImageAction(
 
 }
 
-fun Document.addRectangle() {
-    val rect = Rectangle(577f, 825f, 18f, 15f)
-    rect.enableBorderSide(1)
-    rect.enableBorderSide(2)
-    rect.enableBorderSide(4)
-    rect.enableBorderSide(8)
-    rect.border = Rectangle.BOX
-    rect.borderWidth = 2f
-    rect.borderColor = BaseColor.LIGHT_GRAY
-    this.add(rect)
-}
-//function by amit.
-fun Document.addImage(
-    drawable: Drawable,
-    drawableWidth: Int,
-    drawableHeight: Int
-) {
-    val bitmap = Bitmap.createBitmap(
-        drawableWidth,
-        drawableHeight,
-        Bitmap.Config.ARGB_8888
-    )
-    val canvas = Canvas(bitmap)
-    drawable.setBounds(0, 0, canvas.width, canvas.height)
-    drawable.draw(canvas)
-
-    val stream = ByteArrayOutputStream()
-    bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
-
-    val image = Image.getInstance(stream.toByteArray())
-    image.alignment = Element.ALIGN_CENTER
-    this.add(image)
-}
-
 fun addFooterWithLines(
+    writer: PdfWriter,
     document: Document,
     context: Context,
     footerText: String,
     footerFont: Font,
-    lineColor1: BaseColor = getBaseColorFromResource(context, R.color.orange),
-    lineColor2: BaseColor = getBaseColorFromResource(context, R.color.purple),
-    lineWidth: Float = 2f,
-    lineHeight: Float = 1f,
-    footerAlignment: Int = Element.ALIGN_CENTER
+    lineColor1: BaseColor,
+    lineColor2: BaseColor,
+    lineWidth: Float,
 ){
-    val footerParagraph = Paragraph(footerText, footerFont)
-    footerParagraph.alignment = footerAlignment
-    document.add(footerParagraph)
-    val lineSeparator1 = LineSeparator(lineWidth, 100f, lineColor1, Element.ALIGN_CENTER, -2f)
-    document.add(Chunk(lineSeparator1))
-    val lineSeparator2 = LineSeparator(lineWidth, 100f, lineColor2, Element.ALIGN_CENTER, -2f)
-    document.add(Chunk(lineSeparator2))
+    val cb = writer.directContent
+    val marginLeft = document.left()
+    val marginRight = document.right()
+    //footer text position
+    val textBase = document.bottom() + 10f //height from bottom
+    //footer text
+    cb.beginText()
+    cb.setFontAndSize(footerFont.baseFont, footerFont.size)
+    cb.setColorFill(footerFont.color)
+    cb.showTextAligned(
+        Element.ALIGN_LEFT,
+        footerText,
+        marginLeft,
+        textBase,
+        0f
+    )
+    cb.endText()
 
-}
+    //firstLine position
+    val line1Y = textBase - 13f //footer-text and line gap
+    val line2y = line1Y - lineWidth
 
-class FooterEventHandler(private val context: Context) : PdfPageEventHelper(){
+    //draw the first line
+    cb.setLineWidth(lineWidth)
+    cb.setColorStroke(lineColor1)
+    cb.moveTo(marginLeft, line1Y)
+    cb.lineTo(marginRight, line1Y)
+    cb.stroke()
 
-    override fun onEndPage(writer: PdfWriter?, document: Document?) {
-        val cb : PdfContentByte = writer!!.directContent
-        val pageSize = document!!.pageSize
-        //Footer Text
-        val footerFont = Font(Font.FontFamily.HELVETICA, 10f, Font.NORMAL, BaseColor.BLACK)
-        val footerText = Phrase("NOTE: For any questions about your transaction, please reach out to SOME COMPANY customer care at 0000000000", footerFont)
+    //draw the second line
+    cb.setColorStroke(lineColor2)
+    cb.moveTo(marginLeft, line2y)
+    cb.lineTo(marginRight, line2y)
+    cb.stroke()
 
-        //Position the footer at the bottom of the page
-        ColumnText.showTextAligned(
-            cb,
-            Element.ALIGN_RIGHT,
-            footerText,
-            (pageSize.left + pageSize.right)/2,
-            pageSize.bottom + 40f,
-            0f
-        )
-
-        // Draw the colored lines
-        val line1 = LineSeparator(5f, 100f, getBaseColorFromResource(context, R.color.orange), Element.ALIGN_CENTER, 0f)
-        val line2 = LineSeparator(5f, 100f, getBaseColorFromResource(context, R.color.purple), Element.ALIGN_CENTER, -5f)
-
-        // Set footer content and draw lines
-        val footerTable = PdfPTable(1)
-        footerTable.totalWidth = document.pageSize?.width ?: PageSize.A4.width
-        footerTable.isLockedWidth = true
-        footerTable.defaultCell.border = Rectangle.NO_BORDER
-        footerTable.defaultCell.horizontalAlignment = Element.ALIGN_CENTER
-
-        // Add the colored lines to the footer
-        val linesCell = PdfPCell()
-        linesCell.border = Rectangle.NO_BORDER
-        linesCell.addElement(Chunk(line1))
-        linesCell.addElement(Chunk(line2))
-        footerTable.addCell(linesCell)
-
-//        // Optionally, add other footer content (e.g., text)
-//        footerTable.addCell(Phrase("Your Footer Text Here", Font(Font.FontFamily.HELVETICA, 12f, Font.NORMAL, BaseColor.BLACK)))
-//
-        // Write the footer at the bottom of the page
-        footerTable.writeSelectedRows(0, -1, document.leftMargin() ?: 36f,
-            document.bottomMargin() ?: (36f + 20f), cb)
-
-
-//        document.add(line1)
-//        document.add(line2)
-
-        /*// Draw the first orange line with a border
-        cb.setColorStroke(getBaseColorFromResource(context, R.color.orange))
-        cb.setLineWidth(6f) // Width of the line
-        cb.moveTo(pageSize.borderWidthLeft, pageSize.bottom + 10f)
-        cb.lineTo(pageSize.right - pageSize.borderWidthRight, pageSize.bottom + 10f)
-        cb.stroke()
-
-        // Draw the blue stroke around the orange line
-        cb.setColorStroke(getBaseColorFromResource(context, R.color.purple))
-        cb.setLineWidth(8f) // Width of the stroke line
-        cb.moveTo(pageSize.borderWidthLeft, pageSize.bottom + 10f)
-        cb.lineTo(pageSize.right - pageSize.borderWidthRight, pageSize.bottom + 10f)
-        cb.stroke()
-
-        // Draw the second blue line with a border
-        cb.setColorStroke(getBaseColorFromResource(context, R.color.purple))
-        cb.setLineWidth(6f) // Width of the line
-        cb.moveTo(pageSize.borderWidthLeft, pageSize.bottom + 18f)
-        cb.lineTo(pageSize.right - pageSize.borderWidthRight, pageSize.bottom + 18f)
-        cb.stroke()
-
-        // Draw the second orange stroke
-        cb.setColorStroke(getBaseColorFromResource(context, R.color.orange))
-        cb.setLineWidth(8f) // Width of the stroke line
-        cb.moveTo(pageSize.borderWidthLeft, pageSize.bottom + 18f)
-        cb.lineTo(pageSize.right - pageSize.borderWidthRight, pageSize.bottom + 18f)
-        cb.stroke()*/
-    }
 }
 
 object PdfUtil {
@@ -433,43 +342,33 @@ object PdfUtil {
                 val document = Document()
                 val writer = PdfWriter.getInstance(document, fOut)
 
-                // Set the custom footer handler
-                val footerEvent = FooterEventHandler(context)
-                writer.pageEvent = footerEvent
-
                 document.open()
                 // Document Settings
                 document.setPageSize(PageSize.A4)
                 document.addCreationDate()
-//                document.addRectangle()
-                // Convert the drawable to an Image
-//                document.addImage(ContextCompat.getDrawable(context, R.drawable.ic_android_black_24dp)!!,200,75)
                 for (action in actions){
                     action?.perform(document)
                 }
 
-                /*val footerFont = Font(
-                    BaseFont.createFont(BaseFont.HELVETICA,  BaseFont.CP1252, BaseFont.NOT_EMBEDDED),
-                    12f,
+                //add footer
+                val footerFont = Font(
+                    BaseFont.createFont(BaseFont.HELVETICA_BOLD, BaseFont.CP1252,BaseFont.NOT_EMBEDDED),
+                    9f,
                     Font.NORMAL,
                     BaseColor.BLACK
                 )
-
-                AddParagraphAction()
-                val lineColor1: BaseColor = getBaseColorFromResource(context, R.color.orange)
-                AddParagraphAction()
-                val lineColor2: BaseColor = getBaseColorFromResource(context, R.color.purple)
-
+                val lineColor1 : BaseColor = getBaseColorFromResource(context, R.color.orange)
+                val lineColor2 : BaseColor = getBaseColorFromResource(context, R.color.purple)
                 addFooterWithLines(
-                    document = document,
-                    context = context,
-                    footerText = "NOTE: For any questions about your transaction, please reach out to SOMECOMPANY customer care at 0000000000",
-                    footerFont = footerFont,
-                    lineColor1 = lineColor1,
-                    lineColor2 = lineColor2,
-                    lineWidth = 2f,
-                    footerAlignment = Element.ALIGN_BOTTOM
-                )*/
+                    writer,
+                    document,
+                    context,
+                    footerText = "NOTE: For any questions about your transaction, please reach out to company customer care at 00000000000.",
+                    footerFont,
+                    lineColor1,
+                    lineColor2,
+                    lineWidth = 5f //height for two of the lines
+                )
 
                 document.close()
 
@@ -499,7 +398,6 @@ object PdfUtil {
         val path = FileProvider.getUriForFile(context, "${context.packageName}.provider", pdfFile)
         //setting the intent for a PDF reader
         val pdfIntent = Intent(Intent.ACTION_VIEW)
-//        pdfIntent.setDataAndType(path,"application/pdf")
         pdfIntent.setDataAndType(getUriForPdfFile(context, pdfFile),"application/pdf")
         pdfIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         pdfIntent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
