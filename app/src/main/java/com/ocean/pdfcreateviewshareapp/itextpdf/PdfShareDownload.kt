@@ -100,7 +100,42 @@ class AddTittleTextActionBgColor(
 
 }
 
-class AddDataItemAction(
+class AddDataItemActionIn2Column(
+    private val valueCol1: String,
+    private val valueCol2: String,
+    private val dataFont: Font,
+): PdfAction {
+    override fun perform(document: Document) {
+        val table = PdfPTable(4).apply {
+            widthPercentage = 100f
+            setWidths(floatArrayOf(2f,3f,1f,1f))// adjust width as needed
+        }
+        //create cells for the first two columns with data
+        val valCol1 = PdfPCell(Phrase(valueCol1, dataFont)).apply {
+            border = PdfPCell.NO_BORDER
+            horizontalAlignment = Element.ALIGN_LEFT
+        }
+        val valCol2 = PdfPCell(Phrase(valueCol2, dataFont)).apply {
+            border = PdfPCell.NO_BORDER
+            horizontalAlignment = Element.ALIGN_LEFT
+        }
+        //create empty cells for the last 2 columns
+        val emptyCol3 = PdfPCell(Phrase("")).apply {
+            border = PdfPCell.NO_BORDER
+        }
+        val emptyCol4 = PdfPCell(Phrase("")).apply {
+            border = PdfPCell.NO_BORDER
+        }
+
+        table.addCell(valCol1)
+        table.addCell(valCol2)
+        table.addCell(emptyCol3)
+        table.addCell(emptyCol4)
+        document.add(table)
+    }
+}
+
+class AddDataItemActionInTable4Col(
     private val label: String,
     private val value: String,
     private val font: Font,
@@ -109,11 +144,11 @@ class AddDataItemAction(
         val table = PdfPTable(2)
         table.widthPercentage = 100f
         val labelCell = PdfPCell(Phrase(label, font)).apply {
-            border = PdfPCell.NO_BORDER //BOX
+            border = PdfPCell.ANCHOR
             horizontalAlignment = Element.ALIGN_LEFT
         }
         val valueCell = PdfPCell(Phrase(value, font)).apply {
-            border = PdfPCell.NO_BORDER
+            border = PdfPCell.ANCHOR
             horizontalAlignment = Element.ALIGN_LEFT
         }
         table.addCell(labelCell)
@@ -138,7 +173,7 @@ class AddDataItemActionAlternateRowColor(
         val backgroundColors = if (rowIndex % 2 == 0)greyColor else whiteColor
 
         val labelCell = PdfPCell(Phrase(label, font)).apply {
-            border = PdfPCell.NO_BORDER
+            border = PdfPCell.NO_BORDER //BOTTOM - for bottom line
             horizontalAlignment = Element.ALIGN_LEFT
             backgroundColor = backgroundColors
             paddingBottom = 10f

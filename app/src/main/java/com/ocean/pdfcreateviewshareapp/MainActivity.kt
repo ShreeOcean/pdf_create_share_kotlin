@@ -2,6 +2,7 @@ package com.ocean.pdfcreateviewshareapp
 
 import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -71,6 +72,9 @@ class MainActivity : AppCompatActivity(), PdfContentProvider {
         binding.idBtnSharePdf.setOnClickListener {
             PdfUtil.createAndDisplayPdf(this, "share", this)
         }
+        binding.idBtnGoToActivity2.setOnClickListener {
+            startActivity(Intent(this, MainActivity2::class.java))
+        }
     }
     private fun checkPermission(): Boolean {
 
@@ -124,7 +128,9 @@ class MainActivity : AppCompatActivity(), PdfContentProvider {
             AddImagesInRowAction(this, R.drawable.ic_android_black_24dp, R.drawable.android_whole_icon, 100, 75),
             AddImageAction(this, R.drawable.baseline_bakery_dining_24, 100, 75),
             AddTittleTextActionBgColor(this,"Something-- Receipt", 25.0f, headerFont),
-            AddLineSeparatorAction(lineSeparator),
+            AddParagraphAction(),
+//            AddParagraphAction(),
+//            AddLineSeparatorAction(lineSeparator),
             AddDataItemActionAlternateRowColor(this,"Status", "Success", mOrderIdFont,3),
             AddDataItemActionAlternateRowColor(this, "Amount", "Rs. 2500.00", mOrderIdFont,4),
             AddDataItemActionAlternateRowColor(this,"Bank Name", "SBI", mOrderIdFont,5),

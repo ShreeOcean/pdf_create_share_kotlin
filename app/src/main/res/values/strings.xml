@@ -1,6 +1,9 @@
 <resources>
     <string name="app_name">PdfCreateViewShareApp</string>
     <string name="generate_pdf">Generate PDF</string>
+    <string name="generate_pdf2">Generate PDF different design</string>
     <string name="pdf_generator">PDF Generator</string>
     <string name="share_pdf">Share PDF</string>
+    <string name="share_pdf2">Share PDF different design</string>
+    <string name="check_second_design_pdf">Check Second Design PDF</string>
 </resources>
