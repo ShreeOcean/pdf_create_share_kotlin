@@ -118,8 +118,7 @@ class MainActivity : AppCompatActivity(), PdfContentProvider {
 
     override fun providePdfActions(): List<PdfAction?> {
         val mColorAccent = BaseColor(0, 153, 204, 255)
-        val headerFont =
-            BaseFont.createFont(BaseFont.TIMES_ROMAN, BaseFont.CP1252, BaseFont.EMBEDDED)
+        val headerFont = BaseFont.createFont(BaseFont.TIMES_ROMAN, BaseFont.CP1252, BaseFont.EMBEDDED)
         val fontBody = BaseFont.createFont(BaseFont.HELVETICA, BaseFont.CP1252, BaseFont.EMBEDDED)
         val lineSeparator = LineSeparator().apply { lineColor = BaseColor(0, 0, 0, 68) }
         val mOrderIdFont = Font(fontBody, 18.0f, Font.NORMAL, BaseColor.BLACK)

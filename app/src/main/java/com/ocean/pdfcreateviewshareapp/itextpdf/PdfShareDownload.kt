@@ -5,6 +5,7 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.net.Uri
 import android.os.Build
@@ -22,9 +23,13 @@ import com.itextpdf.text.Image
 import com.itextpdf.text.PageSize
 import com.itextpdf.text.Paragraph
 import com.itextpdf.text.Phrase
+import com.itextpdf.text.Rectangle
 import com.itextpdf.text.pdf.BaseFont
+import com.itextpdf.text.pdf.ColumnText
+import com.itextpdf.text.pdf.PdfContentByte
 import com.itextpdf.text.pdf.PdfPCell
 import com.itextpdf.text.pdf.PdfPTable
+import com.itextpdf.text.pdf.PdfPageEventHelper
 import com.itextpdf.text.pdf.PdfWriter
 import com.itextpdf.text.pdf.draw.LineSeparator
 import com.ocean.pdfcreateviewshareapp.R
@@ -51,7 +56,7 @@ class AddTittleTextAction(
     private val font: BaseFont,
     private val textStyle: Int = Font.NORMAL,
     private val color: BaseColor = BaseColor.BLACK,
-    private val alignment: Int = Element.ALIGN_CENTER
+    private val alignment: Int = Element.ALIGN_LEFT
 ) : PdfAction {
     override fun perform(document: Document) {
         val chunk = Chunk(text, Font(font, size, textStyle, color))
@@ -99,7 +104,7 @@ class AddTittleTextActionBgColor(
     }
 
 }
-
+/** class for showing data without header at first 2 columns only but contains 4 columns */
 class AddDataItemActionIn2Column(
     private val valueCol1: String,
     private val valueCol2: String,
@@ -131,6 +136,148 @@ class AddDataItemActionIn2Column(
         table.addCell(valCol2)
         table.addCell(emptyCol3)
         table.addCell(emptyCol4)
+        document.add(table)
+    }
+}
+
+data class Transaction(
+    val txnNo:String,
+    val rrnNo:String,
+    val amount:String,
+    val fee:String,
+    val status:String
+)
+/** class for showing data in 5column table */
+/*class AddTransactionTableAction(
+    private val transactions: List<Transaction>,
+    private val headerFont: Font,
+    private val cellFont: Font,
+    private val totalFont: Font
+): PdfAction{
+    override fun perform(document: Document) {
+        val table = PdfPTable(5).apply {
+            widthPercentage = 100f
+            setWidths(floatArrayOf(1f,3f,1f,1f,2f)) //adjust the widths as needed
+        }
+        //add header cells
+        val headers = listOf("TXN No.", "RNN No.", "Amount", "Fee", "Status")
+        for (header in headers){
+            val cell = PdfPCell(Phrase(header, headerFont)).apply {
+                horizontalAlignment = Element.ALIGN_LEFT
+                paddingBottom = 5f
+            }
+            table.addCell(cell)
+
+            //add rows dynamically
+            for(transaction in transactions){
+                table.addCell(createCell(transaction.txnNo, cellFont))
+                table.addCell(createCell(transaction.rrnNo, cellFont))
+                table.addCell(createCell("₹ ${transaction.amount.toDouble()}", cellFont))
+                table.addCell(createCell("₹ ${transaction.fee.toDouble()}", cellFont))
+                table.addCell(createCell(transaction.status, cellFont))
+            }
+            //add total row
+            table.addCell(PdfPCell(Phrase("Total")).apply {
+                colspan = 3
+                horizontalAlignment = Element.ALIGN_RIGHT
+                paddingTop = 5f
+                paddingBottom = 5f
+                borderColor = BaseColor.BLACK
+            })
+            table.addCell(createCell(transactions.sumOf { it.amount.toDouble() }.toString(), totalFont))
+            table.addCell(createCell(transactions.sumOf { it.fee.toDouble() }.toString(), totalFont))
+
+            document.add(table)
+        }
+    }
+    private fun createCell(content: String, font: Font):PdfPCell{
+        return PdfPCell(Phrase(content, font)).apply {
+            horizontalAlignment = Element.ALIGN_LEFT
+            setPadding(5f)
+            border = PdfPCell.BOTTOM
+        }
+    }
+
+}*/
+class AddDataAction5Column( //working
+    private val headers: List<String>,  // List of headers for the table
+    private val data: List<List<String>>, // List of rows where each row is a list of column values
+    private val headerFont: Font,
+    private val cellFont: Font,
+    private val totalFont: Font,
+): PdfAction{
+    override fun perform(document: Document) {
+        // Create a table with 5 columns
+        val table = PdfPTable(5).apply {
+
+        }
+        table.widthPercentage = 100f
+        table.setWidths(floatArrayOf(2f, 2f, 2f, 2f, 2f)) // Adjust column widths if needed
+
+        // Add Header Row
+        for (header in headers) {
+            val headerCell = PdfPCell(Phrase(header, headerFont)).apply {
+                horizontalAlignment = Element.ALIGN_LEFT
+                paddingTop = 5f
+                paddingBottom = 5f
+                border = PdfPCell.BOTTOM
+               }
+            table.addCell(headerCell)
+        }
+
+        var totalAmount = 0.0
+        var totalFee = 0.0
+
+        // Add Data Rows
+        for (row in data) {
+            for ((index,cellValue) in row.withIndex()) {
+                val cell = PdfPCell(Phrase(cellValue, cellFont)).apply {
+                    horizontalAlignment = Element.ALIGN_LEFT
+                    paddingTop = 5f
+                    paddingBottom = 5f
+                    border = PdfPCell.BOTTOM
+                }
+                table.addCell(cell)
+                // Sum up the "Amount" and "Fee" columns
+                if (index == 2) { // Assuming "Amount" is in the 3rd column
+                    totalAmount += cellValue.replace("₹", "").toDoubleOrNull() ?: 0.0
+                } else if (index == 3) { // Assuming "Fee" is in the 4th column
+                    totalFee += cellValue.replace("₹", "").toDoubleOrNull() ?: 0.0
+                }
+            }
+        }
+
+        //add total row
+        table.addCell(PdfPCell(Phrase("Total")).apply {
+            colspan = 1
+            horizontalAlignment = Element.ALIGN_LEFT
+            paddingTop = 5f
+            paddingBottom = 5f
+            borderColor = BaseColor.BLACK
+            border = PdfPCell.BOTTOM
+        })
+        table.addCell(PdfPCell(Phrase("")).apply {
+            colspan = 1
+            border = PdfPCell.BOTTOM
+        })
+        table.addCell(PdfPCell(Phrase("₹$totalAmount", totalFont)).apply {
+//            colspan = 3
+            border = PdfPCell.BOTTOM
+            horizontalAlignment = Element.ALIGN_LEFT
+            paddingTop = 5f
+            paddingBottom = 5f
+            borderColor = BaseColor.BLACK
+        })
+        table.addCell(PdfPCell(Phrase("₹$totalFee", totalFont)).apply {
+            colspan = 3
+            border = PdfPCell.BOTTOM
+            horizontalAlignment = Element.ALIGN_LEFT
+            paddingTop = 5f
+            paddingBottom = 5f
+            borderColor = BaseColor.BLACK
+        })
+
+        // Add the table to the document
         document.add(table)
     }
 }
@@ -351,6 +498,221 @@ fun addFooterWithLines(
 
 }
 
+//dmt header handler
+class CustomHeaderEventHandler(
+    private val headerImage: Bitmap?,
+    private val headerTittle: String,
+    private val headerFont: Font,
+    private val line1Color: BaseColor,
+    private val line2Color: BaseColor,
+    private val lineWidth: Float,
+): PdfPageEventHelper(){
+    override fun onEndPage(writer: PdfWriter?, document: Document?) {
+        super.onEndPage(writer, document)
+
+        val cb = writer?.directContent
+        val pageSize = document?.pageSize
+
+        //draw the first line
+        cb!!.setColorStroke(line1Color)
+        cb.setLineWidth(lineWidth)
+        cb.moveTo(document!!.leftMargin(), pageSize?.height!! - document.topMargin() + 10f)
+        cb.lineTo(pageSize.width - document.rightMargin(), pageSize.height - document.topMargin() + 10f )
+        cb.stroke()
+
+        //draw the 2nd line just below first one
+        cb.setColorStroke(line2Color)
+        cb.setLineWidth(lineWidth)
+        cb.moveTo(document.leftMargin(), pageSize.height - document.topMargin() + 15f)
+        cb.lineTo(pageSize.width - document.rightMargin(), pageSize.height - document.topMargin() + 15f)
+        cb.stroke()
+
+        val table = PdfPTable(2)
+        table.totalWidth = pageSize!!.width - document.leftMargin() - document.rightMargin()
+
+        //add header image
+        val imageCell = if (headerImage != null){
+            val image = Image.getInstance(headerImageToByteArray(headerImage))
+            image.scaleToFit(50f,50f)
+            PdfPCell(image, true).apply {
+                border = PdfPCell.NO_BORDER
+                horizontalAlignment = Element.ALIGN_LEFT
+                verticalAlignment = Element.ALIGN_MIDDLE
+            }
+        } else {
+            PdfPCell(Phrase("")).apply { border = PdfPCell.NO_BORDER }
+        }
+
+        //Add header tittle
+        val tittleCell = PdfPCell(Phrase(headerTittle, headerFont)).apply {
+            border = PdfPCell.NO_BORDER
+            horizontalAlignment = Element.ALIGN_RIGHT
+            verticalAlignment = Element.ALIGN_MIDDLE
+        }
+
+        table.addCell(imageCell)
+        table.addCell(tittleCell)
+        table.writeSelectedRows(
+            0,1,
+            document.leftMargin(),
+            pageSize.height - document.topMargin(),
+            cb
+        )
+    }
+
+    private fun headerImageToByteArray(headerImage: Bitmap): ByteArray {
+        val stream = ByteArrayOutputStream()
+        headerImage.compress(Bitmap.CompressFormat.PNG, 100, stream)
+        return stream.toByteArray()
+    }
+}
+class CustomFooterEventHandler(
+    private val footerText: String,
+    private val footerFont: Font,
+    private val line1Color: BaseColor,
+    private val line2Color: BaseColor,
+    private val lineWidth: Float,
+):PdfPageEventHelper(){
+    override fun onEndPage(writer: PdfWriter?, document: Document?) {
+        super.onEndPage(writer, document)
+
+        val cb = writer?.directContent
+        val pageSize = document?.pageSize
+
+        //draw the first line
+        cb!!.setColorStroke(line1Color)
+        cb.setLineWidth(lineWidth)
+        cb.moveTo(document!!.leftMargin(), document.bottomMargin() - 10f)
+        cb.lineTo(pageSize!!.width - document.rightMargin(),document.bottomMargin() - 10f )
+        cb.stroke()
+
+        //draw the 2nd line just below first one
+        cb.setColorStroke(line2Color)
+        cb.setLineWidth(lineWidth)
+        cb.moveTo(document.leftMargin(), document.bottomMargin() - 15f)
+        cb.lineTo(pageSize.width - document.rightMargin(), document.bottomMargin() - 15f)
+        cb.stroke()
+
+        //add footer test
+        val footerTable = PdfPTable(1)
+        footerTable.totalWidth = pageSize.width - document.leftMargin() - document.rightMargin()
+
+        val footerCell = PdfPCell(Phrase(footerText, footerFont)).apply {
+            border = PdfPCell.NO_BORDER
+            horizontalAlignment = Element.ALIGN_CENTER
+            paddingTop = 20f //adjust for space between line and text
+        }
+
+        footerTable.addCell(footerCell)
+        footerTable.writeSelectedRows(
+            0,-1,
+            document.leftMargin(),
+            document.bottomMargin() - 25f,
+            cb
+        )
+    }
+
+}
+class FooterEventHandler(private val context: Context) : PdfPageEventHelper(){
+
+    override fun onEndPage(writer: PdfWriter?, document: Document?) {
+        val cb : PdfContentByte = writer!!.directContent
+        val pageSize = document!!.pageSize
+        //Footer Text
+        val footerFont = Font(Font.FontFamily.HELVETICA, 10f, Font.NORMAL, BaseColor.BLACK)
+        val footerText = Phrase("NOTE: For any questions about your transaction, please reach out to SOME COMPANY customer care at 0000000000", footerFont)
+
+        //Position the footer at the bottom of the page
+        ColumnText.showTextAligned(
+            cb,
+            Element.ALIGN_CENTER,
+            footerText,
+            (pageSize.left + pageSize.right)/2,
+            pageSize.bottom + 40f,
+            0f
+        )
+
+        // Draw the colored lines
+        val line1 = LineSeparator(5f, 100f, getBaseColorFromResource(context, R.color.orange), Element.ALIGN_CENTER, 0f)
+        val line2 = LineSeparator(5f, 100f, getBaseColorFromResource(context, R.color.purple), Element.ALIGN_CENTER, -5f)
+
+        // Set footer content and draw lines
+        val footerTable = PdfPTable(1)
+        footerTable.totalWidth = document.pageSize?.width ?: PageSize.A4.width
+        footerTable.isLockedWidth = true
+        footerTable.defaultCell.border = Rectangle.NO_BORDER
+        footerTable.defaultCell.horizontalAlignment = Element.ALIGN_CENTER
+
+        // Add the colored lines to the footer
+        val linesCell = PdfPCell()
+        linesCell.border = Rectangle.NO_BORDER
+        linesCell.addElement(Chunk(line1))
+        linesCell.addElement(Chunk(line2))
+        footerTable.addCell(linesCell)
+
+        // Draw the first orange line with a border
+        cb.setColorStroke(getBaseColorFromResource(context, R.color.orange))
+        cb.setLineWidth(6f) // Width of the line
+        cb.moveTo(pageSize.borderWidthLeft, pageSize.bottom + 3f)
+        cb.lineTo(pageSize.right - pageSize.borderWidthRight, pageSize.bottom + 3f)
+        cb.stroke()
+        // Draw the blue stroke around the orange line
+        cb.setColorStroke(getBaseColorFromResource(context, R.color.purple))
+        cb.setLineWidth(8f) // Width of the stroke line
+        cb.moveTo(pageSize.borderWidthLeft, pageSize.bottom + 3f)
+        cb.lineTo(pageSize.right - pageSize.borderWidthRight, pageSize.bottom + 3f)
+        cb.stroke()
+        // Draw the second blue line with a border
+        cb.setColorStroke(getBaseColorFromResource(context, R.color.purple))
+        cb.setLineWidth(6f) // Width of the line
+        cb.moveTo(pageSize.borderWidthLeft, pageSize.bottom + 11f)
+        cb.lineTo(pageSize.right - pageSize.borderWidthRight, pageSize.bottom + 11f)
+        cb.stroke()
+        // Draw the second orange stroke
+        cb.setColorStroke(getBaseColorFromResource(context, R.color.orange))
+        cb.setLineWidth(8f) // Width of the stroke line
+        cb.moveTo(pageSize.borderWidthLeft, pageSize.bottom + 11f)
+        cb.lineTo(pageSize.right - pageSize.borderWidthRight, pageSize.bottom + 11f)
+        cb.stroke()
+    }
+}
+
+class HeaderEventHandler(private val context: Context) : PdfPageEventHelper() {
+
+    override fun onEndPage(writer: PdfWriter?, document: Document?) {
+        val cb: PdfContentByte = writer!!.directContent
+        val pageSize = document!!.pageSize
+
+        // Draw the first orange line
+        cb.setColorStroke(getBaseColorFromResource(context, R.color.orange))
+        cb.setLineWidth(6f) // Width of the line
+        cb.moveTo(pageSize.borderWidthLeft, pageSize.top - 3f) // Adjust position as needed
+        cb.lineTo(pageSize.right - pageSize.borderWidthRight, pageSize.top - 3f)
+        cb.stroke()
+
+        // Draw the blue stroke around the orange line
+        cb.setColorStroke(getBaseColorFromResource(context, R.color.purple))
+        cb.setLineWidth(8f) // Width of the stroke line
+        cb.moveTo(pageSize.borderWidthLeft, pageSize.top - 3f)
+        cb.lineTo(pageSize.right - pageSize.borderWidthRight, pageSize.top - 3f)
+        cb.stroke()
+
+        // Draw the second blue line
+        cb.setColorStroke(getBaseColorFromResource(context, R.color.purple))
+        cb.setLineWidth(6f) // Width of the line
+        cb.moveTo(pageSize.borderWidthLeft, pageSize.top - 11f) // Adjust position as needed
+        cb.lineTo(pageSize.right - pageSize.borderWidthRight, pageSize.top - 11f)
+        cb.stroke()
+
+        // Draw the second orange stroke around the blue line
+        cb.setColorStroke(getBaseColorFromResource(context, R.color.orange))
+        cb.setLineWidth(8f) // Width of the stroke line
+        cb.moveTo(pageSize.borderWidthLeft, pageSize.top - 11f)
+        cb.lineTo(pageSize.right - pageSize.borderWidthRight, pageSize.top - 11f)
+        cb.stroke()
+    }
+}
+
 object PdfUtil {
 
     @OptIn(DelicateCoroutinesApi::class)
@@ -376,16 +738,27 @@ object PdfUtil {
 
                 val document = Document()
                 val writer = PdfWriter.getInstance(document, fOut)
-
-                document.open()
+                // Set the custom footer handler
+                val footerEvent = HeaderEventHandler(context)
+                writer.pageEvent = footerEvent
+                /*//custom header dmt
+                val headerImage = BitmapFactory.decodeResource(context.resources, R.drawable.android_whole_icon)
+                val headerFont = Font(BaseFont.createFont(BaseFont.HELVETICA_BOLD, BaseFont.CP1252, BaseFont.NOT_EMBEDDED), 14f, Font.BOLD, BaseColor.BLACK)
+                val line2Color = getBaseColorFromResource(context, R.color.orange)
+                val line1Color = getBaseColorFromResource(context, R.color.purple)
+                writer.pageEvent = CustomHeaderEventHandler(headerImage, "", headerFont, line1Color, line2Color, 5f)
+                */document.open()
                 // Document Settings
                 document.setPageSize(PageSize.A4)
                 document.addCreationDate()
+
                 for (action in actions){
                     action?.perform(document)
                 }
 
-                //add footer
+                writer.pageEvent = FooterEventHandler(context)
+
+                /*//add footer
                 val footerFont = Font(
                     BaseFont.createFont(BaseFont.HELVETICA_BOLD, BaseFont.CP1252,BaseFont.NOT_EMBEDDED),
                     9f,
@@ -403,8 +776,17 @@ object PdfUtil {
                     lineColor1,
                     lineColor2,
                     lineWidth = 5f //height for two of the lines
-                )
+                )*/
 
+                //custom footer
+                /*val footerFont = Font(BaseFont.createFont(BaseFont.HELVETICA_BOLD, BaseFont.CP1252, BaseFont.NOT_EMBEDDED), 8f, Font.BOLD, BaseColor.BLACK)
+                writer.pageEvent = CustomFooterEventHandler(
+                    "NOTE: For any questions about your transaction, please reach out to company customer care at 00000000000.",
+                    footerFont,
+                    line1Color,
+                    line2Color,
+                    5f
+                )*/
                 document.close()
 
                 withContext(Dispatchers.Main){
